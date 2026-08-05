@@ -17,6 +17,7 @@ public class EmailAlertSender
 
     public async Task SendAlertAsync()
     {
+        // TODO: Escrever template de e-mail
         string subject = "TITULO E-MAIL";
         string body = "MENSAGEM E-MAIL";
 

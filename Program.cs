@@ -40,14 +40,11 @@ public static class Program
         // Carregar configurações de envio de e-mail e protocolo de arquivo .json
 
         string configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
-        Console.WriteLine(configPath);
 
         if (!File.Exists(configPath))
         {
             configPath = Path.Combine(Directory.GetCurrentDirectory(), "config.json");
         }
-
-        Console.WriteLine(configPath);
 
         if (!File.Exists(configPath))
         {
@@ -85,29 +82,50 @@ public static class Program
             return 1;       
         }
 
-        Console.WriteLine(config.Email.To);
-        Console.WriteLine(config.Email.From);
-        Console.WriteLine(config.Email.FromName);
-        Console.WriteLine(config.Smtp.Host);
-        Console.WriteLine(config.Smtp.User);
-        Console.WriteLine(config.Smtp.AppPassword);
-        Console.WriteLine(config.Smtp.EnableSsl);
-
-        /*
-        
-        var emailSender = new EmailAlertSender(config.Email, config.Smtp);
-        await emailSender.SendAlertAsync();
-
-        */
-
         using var  httpClient = new HttpClient();
 
         var quoteProvider = new QuoteProvider(httpClient, config.BrapiToken);
 
-        decimal currentPrice = await quoteProvider.GetCurrentPriceAsync(ticker);
+        var emailSender = new EmailAlertSender(config.Email, config.Smtp);
 
-        Console.WriteLine($"{DateTime.Now:HH:mm:ss}{ticker}: {currentPrice:F2}");
+        while (true)
+        {
+            try
+            {
+                decimal currentPrice = await quoteProvider.GetCurrentPriceAsync(ticker);
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {ticker} = R$ {currentPrice:F2}");
 
+                if (currentPrice > sellPrice)
+                {
+                    Console.WriteLine($"Preço acima de R$ {sellPrice:F2}.");
+                    await emailSender.SendAlertAsync();
+                }
+                else if (currentPrice < buyPrice)
+                {
+                    Console.WriteLine($"Preço abaixo de R$ {sellPrice:F2}.");
+                    await emailSender.SendAlertAsync();
+                }
+
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Erro ao consultar/alertar: {ex.Message}");
+            }
+
+            try
+            {
+                // TODO: Generalizar o delay entre alertas
+                await Task.Delay(TimeSpan.FromSeconds(15));   
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
         return 0;
     }
 }
