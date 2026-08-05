@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace StockQuoteAlert;
 public static class Program
@@ -36,26 +37,66 @@ public static class Program
 
         Console.WriteLine($"ticker = {ticker} - sellPrice = {sellPrice} - buyPrice = {buyPrice}");
 
-        // Configurações iniciais do envio do e-mail (censurado)
-        EmailSettings emailSettings = new EmailSettings
-        {
-            To = "seu-email@exemplo.com",
-            From = "alertas@exemplo.com",
-            FromName = "Stock Quote Alert"
-        };
+        // Carregar configurações de envio de e-mail e protocolo de arquivo .json
 
-        // Configurações iniciais do protocolo (censurado)
-        SmtpSettings smtpSettings = new SmtpSettings
-        {
-            Host = "smtp.gmail.com",
-            Port =  587,
-            User = "alertas@exemplo.com",
-            AppPassword = "sua-senha-de-app-aqui",
-            EnableSsl =  true
-        };
+        string configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
+        Console.WriteLine(configPath);
 
-        var emailSender = new EmailAlertSender(emailSettings, smtpSettings);
+        if (!File.Exists(configPath))
+        {
+            configPath = Path.Combine(Directory.GetCurrentDirectory(), "config.json");
+        }
+
+        Console.WriteLine(configPath);
+
+        if (!File.Exists(configPath))
+        {
+            Console.WriteLine("Arquivo de configuração não encontrado.");
+            return 1;
+        }
+
+        AppConfig config;
+        try
+        {
+            string json = await File.ReadAllTextAsync(configPath);
+            config = JsonSerializer.Deserialize<AppConfig>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? throw new InvalidOperationException("Arquivo de configuração existe mas é vazio.");
+        }
+        catch (Exception ex)
+        {   
+            Console.WriteLine($"Falha ao ler config.jason: {ex.Message}");
+            return 1;
+        }
+
+        // Verifica se ambos os endereço do destinatário e o endereço do host do protocolo estão em config.json
+        if (   string.IsNullOrWhiteSpace(config.Email.To) 
+            || string.IsNullOrWhiteSpace(config.Email.From)
+            || string.IsNullOrWhiteSpace(config.Email.FromName)
+            || string.IsNullOrWhiteSpace(config.Smtp.Host)
+            || (config.Smtp.Port <= 0) 
+            || (config.Smtp.Port > 65535)
+            || string.IsNullOrWhiteSpace(config.Smtp.User)
+            || string.IsNullOrWhiteSpace(config.Smtp.AppPassword)
+        )
+        {
+            Console.WriteLine("Configuração incompleta: verifique os campos \"Email\" e \"Smtp\" em config.json.");
+            return 1;       
+        }
+
+        Console.WriteLine(config.Email.To);
+        Console.WriteLine(config.Email.From);
+        Console.WriteLine(config.Email.FromName);
+        Console.WriteLine(config.Smtp.Host);
+        Console.WriteLine(config.Smtp.User);
+        Console.WriteLine(config.Smtp.AppPassword);
+        Console.WriteLine(config.Smtp.EnableSsl);
+
+        var emailSender = new EmailAlertSender(config.Email, config.Smtp);
         await emailSender.SendAlertAsync();
+
+
         return 0;
     }
 }

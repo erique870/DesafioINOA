@@ -2,7 +2,8 @@ namespace StockQuoteAlert;
 
 public class AppConfig
 {
-    // TODO: Implementar as configurações da aplicação
+    public EmailSettings Email { get; set; } = new();
+    public SmtpSettings Smtp { get; set; } = new();
 }
 
 public class EmailSettings

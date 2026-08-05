@@ -1,0 +1,14 @@
+{
+  "Email": {
+    "To": "seu-email@exemplo.com",
+    "From": "alertas@exemplo.com",
+    "FromName": "Stock Quote Alert"
+  },
+  "Smtp": {
+    "Host": "smtp.gmail.com",
+    "Port": 587,
+    "User": "alertas@exemplo.com",
+    "AppPassword": "sua-senha-de-app-aqui",
+    "EnableSsl": true
+  }
+}
