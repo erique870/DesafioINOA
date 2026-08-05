@@ -93,9 +93,20 @@ public static class Program
         Console.WriteLine(config.Smtp.AppPassword);
         Console.WriteLine(config.Smtp.EnableSsl);
 
+        /*
+        
         var emailSender = new EmailAlertSender(config.Email, config.Smtp);
         await emailSender.SendAlertAsync();
 
+        */
+
+        using var  httpClient = new HttpClient();
+
+        var quoteProvider = new QuoteProvider(httpClient, config.BrapiToken);
+
+        decimal currentPrice = await quoteProvider.GetCurrentPriceAsync(ticker);
+
+        Console.WriteLine($"{DateTime.Now:HH:mm:ss}{ticker}: {currentPrice:F2}");
 
         return 0;
     }

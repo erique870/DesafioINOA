@@ -10,5 +10,6 @@
     "User": "alertas@exemplo.com",
     "AppPassword": "sua-senha-de-app-aqui",
     "EnableSsl": true
-  }
+  },
+  "BrapiToken": ""
 }
