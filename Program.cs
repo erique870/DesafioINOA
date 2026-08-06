@@ -15,14 +15,14 @@ public static class Program
 
         string ticker = args[0].Trim().ToUpperInvariant();
 
-        // Safe Parser para decimais, aceita vírgulas e pontos como separadores
+        // Safe Parser para decimais, aceita vírgulas e pontos como separadores de números decimais
         if (!decimal.TryParse(args[1], NumberStyles.Number, CultureInfo.InvariantCulture, out decimal sellPrice))
         {
             Console.WriteLine("Valor informado inválido.");            
             return 1;
         }
         
-        // Safe Parser para decimais, aceita vírgulas e pontos como separadores
+        // Safe Parser para decimais, aceita vírgulas e pontos como separadores de números decimais
         if (!decimal.TryParse(args[2], NumberStyles.Number, CultureInfo.InvariantCulture, out decimal buyPrice))
         {
             Console.WriteLine("Valor informado inválido.");            
@@ -35,7 +35,7 @@ public static class Program
             return 1;
         }
 
-        // Carregar configurações de envio de e-mail e protocolo de arquivo .json
+        // Carregar configurações de envio de e-mail e protocolo do arquivo de configuração config.json
 
         string configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
 
@@ -46,7 +46,7 @@ public static class Program
 
         if (!File.Exists(configPath))
         {
-            Console.WriteLine("Arquivo de configuração não encontrado.");
+            Console.WriteLine("Arquivo de configuração \"config.json\" não encontrado.");
             return 1;
         }
 
@@ -57,15 +57,15 @@ public static class Program
             config = JsonSerializer.Deserialize<AppConfig>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
-            }) ?? throw new InvalidOperationException("Arquivo de configuração existe mas é vazio.");
+            }) ?? throw new InvalidOperationException("Arquivo de configuração \"config.json\" existe mas está vazio.");
         }
         catch (Exception ex)
         {   
-            Console.WriteLine($"Falha ao ler config.jason: {ex.Message}");
+            Console.WriteLine($"Falha ao ler arquivo de configuração \"config.json\": {ex.Message}");
             return 1;
         }
 
-        // Verifica se ambos os endereço do destinatário e o endereço do host do protocolo estão em config.json
+        // Verifica se ambos os endereço do destinatário e o endereço do host do protocolo estão no arquivo de configuração config.json
         if (   string.IsNullOrWhiteSpace(config.Email.To) 
             || string.IsNullOrWhiteSpace(config.Email.From)
             || string.IsNullOrWhiteSpace(config.Email.FromName)
@@ -74,9 +74,10 @@ public static class Program
             || (config.Smtp.Port > 65535)
             || string.IsNullOrWhiteSpace(config.Smtp.User)
             || string.IsNullOrWhiteSpace(config.Smtp.AppPassword)
+            || (config.QuoteUpdateIntervalSeconds <= 0)
         )
         {
-            Console.WriteLine("Configuração incompleta: verifique os campos \"Email\" e \"Smtp\" em config.json.");
+            Console.WriteLine("Configuração incompleta ou incorreta: verifique os campos \"Email\", \"Smtp\" e \"QuoteUpdateIntervalSeconds\" em \"config.json\".");
             return 1;       
         }
 
@@ -86,10 +87,11 @@ public static class Program
 
         var emailSender = new EmailAlertSender(config.Email, config.Smtp);
 
-        // Para evitar spam de notiviações, notifico apenas quando o valor de cotação extrapola a faixa de valores informada
+        // Para evitar spam de notificações, notifico apenas quando o valor de cotação extrapola a faixa de valores informada
         bool sellAlertActive = false;
         bool buyAlertActive = false;    
 
+        // Loop de requisição de cotação e envio de alertas sempre que necessário, pare a execução via terminal com CTRL + C
         while (true)
         {
             try
@@ -103,8 +105,13 @@ public static class Program
                     if (!sellAlertActive)
                     {    
                         Console.WriteLine($"Preço acima de R$ {sellPrice:F2}. Enviando alerta de VENDA...");
+
                         await emailSender.SendAlertAsync(ticker, AlertType.Venda, currentPrice, sellPrice);
-                        sellAlertActive = true; // Última notificação é de VENDA
+                        
+                        Console.WriteLine($"Alerta de VENDA do ativo {ticker} enviado com sucesso para {config.Email.To}!");
+                        
+                        // Última notificação é de VENDA
+                        sellAlertActive = true; 
                     }
                     buyAlertActive = false;
                 }
@@ -114,14 +121,19 @@ public static class Program
                     if (!buyAlertActive)
                     {
                         Console.WriteLine($"Preço abaixo de R$ {buyPrice:F2}. Enviando alerta de COMPRA...");
+                        
                         await emailSender.SendAlertAsync(ticker, AlertType.Compra, currentPrice, buyPrice);    
-                        buyAlertActive = true; // Última notificação foi de COMPRA
+                        
+                        Console.WriteLine($"Alerta de COMPRA do ativo {ticker} enviado com sucesso para {config.Email.To}!");
+                        
+                        // Última notificação foi de COMPRA
+                        buyAlertActive = true; 
                     }
                     sellAlertActive = false;
                 }
                 else
                 {
-                    // Faixa entre os valores informados
+                    // A cotação atual está na faixa entre os valores informados, não dispara nada para o endereço de e-mail informado
                     buyAlertActive = false;
                     sellAlertActive = false;
                 }

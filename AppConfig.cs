@@ -4,7 +4,11 @@ public class AppConfig
 {
     public EmailSettings Email { get; set; } = new();
     public SmtpSettings Smtp { get; set; } = new();
+
+    // Suporte a tokens customizados da API Brapi (string vazia se plano gratuito)
     public string? BrapiToken { get; set; }
+
+    // Intervalo de tempo entre requisições de API consecutivas, configurada em config.json
     public int QuoteUpdateIntervalSeconds { get; set; }
 }
 

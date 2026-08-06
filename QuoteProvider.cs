@@ -4,19 +4,19 @@ using System.Text.Json.Serialization;
 
 namespace StockQuoteAlert;
 
+// Faz requisições da cotação atual do ativo B3 informado, a API de cotação escolhida foi a brapi (https://brapi.dev/)
 public class QuoteProvider
 {
     private readonly HttpClient _httpClient;
     private readonly string? _token;
 
-    // Construtor da classe
     public QuoteProvider(HttpClient httpClient, string? token)
     {
         _httpClient = httpClient;
         _token = token;    
     }
 
-    // A API de cotação escolhida foi a brapi (https://brapi.dev/)
+    // Retorna o preço atual (regularMarketPrice) do ativo informado
     public async Task<decimal> GetCurrentPriceAsync(string ticker)
     {
         string url = $"https://brapi.dev/api/quote/{Uri.EscapeDataString(ticker)}";

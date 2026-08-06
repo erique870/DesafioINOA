@@ -10,12 +10,12 @@ public enum AlertType
     Compra
 }
 
+// Envia os e-mails de alerta de cotações usando as configurações SMTP do arquivo config.json
 public class EmailAlertSender
 {
     private readonly EmailSettings _emailSettings;
     private readonly SmtpSettings _smtpSettings;
 
-    // Construtor da classe
     public EmailAlertSender(EmailSettings emailSettings, SmtpSettings smtpSettings)
     {
         _emailSettings = emailSettings;
