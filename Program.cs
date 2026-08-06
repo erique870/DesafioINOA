@@ -88,6 +88,10 @@ public static class Program
 
         var emailSender = new EmailAlertSender(config.Email, config.Smtp);
 
+        // Para evitar spam de notiviações, notifico apenas quando o valor de cotação extrapola a faixa de valores informada
+        bool sellAlertActive = false;
+        bool buyAlertActive = false;    
+
         while (true)
         {
             try
@@ -97,13 +101,31 @@ public static class Program
 
                 if (currentPrice > sellPrice)
                 {
-                    Console.WriteLine($"Preço acima de R$ {sellPrice:F2}. Enviando alerta de VENDA...");
-                    await emailSender.SendAlertAsync(ticker, AlertType.Venda, currentPrice, sellPrice);
+                    // Verifica se a última notificação NÃO foi de VENDA 
+                    if (!sellAlertActive)
+                    {    
+                        Console.WriteLine($"Preço acima de R$ {sellPrice:F2}. Enviando alerta de VENDA...");
+                        await emailSender.SendAlertAsync(ticker, AlertType.Venda, currentPrice, sellPrice);
+                        sellAlertActive = true; // Última notificação é de VENDA
+                    }
+                    buyAlertActive = false;
                 }
                 else if (currentPrice < buyPrice)
                 {
-                    Console.WriteLine($"Preço abaixo de R$ {buyPrice:F2}. Enviando alerta de COMPRA...");
-                    await emailSender.SendAlertAsync(ticker, AlertType.Compra, currentPrice, buyPrice);
+                    // Verifica se a última notificação NÃO foi de COMPRA
+                    if (!buyAlertActive)
+                    {
+                        Console.WriteLine($"Preço abaixo de R$ {buyPrice:F2}. Enviando alerta de COMPRA...");
+                        await emailSender.SendAlertAsync(ticker, AlertType.Compra, currentPrice, buyPrice);    
+                        buyAlertActive = true; // Última notificação foi de COMPRA
+                    }
+                    sellAlertActive = false;
+                }
+                else
+                {
+                    // Faixa entre os valores informados
+                    buyAlertActive = false;
+                    sellAlertActive = false;
                 }
 
             }
