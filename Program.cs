@@ -97,13 +97,13 @@ public static class Program
 
                 if (currentPrice > sellPrice)
                 {
-                    Console.WriteLine($"Preço acima de R$ {sellPrice:F2}.");
-                    await emailSender.SendAlertAsync();
+                    Console.WriteLine($"Preço acima de R$ {sellPrice:F2}. Enviando alerta de VENDA...");
+                    await emailSender.SendAlertAsync(ticker, AlertType.Venda, currentPrice, sellPrice);
                 }
                 else if (currentPrice < buyPrice)
                 {
-                    Console.WriteLine($"Preço abaixo de R$ {sellPrice:F2}.");
-                    await emailSender.SendAlertAsync();
+                    Console.WriteLine($"Preço abaixo de R$ {buyPrice:F2}. Enviando alerta de COMPRA...");
+                    await emailSender.SendAlertAsync(ticker, AlertType.Compra, currentPrice, buyPrice);
                 }
 
             }
