@@ -35,8 +35,6 @@ public static class Program
             return 1;
         }
 
-        Console.WriteLine($"ticker = {ticker} - sellPrice = {sellPrice} - buyPrice = {buyPrice}");
-
         // Carregar configurações de envio de e-mail e protocolo de arquivo .json
 
         string configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
