@@ -5,6 +5,7 @@ public class AppConfig
     public EmailSettings Email { get; set; } = new();
     public SmtpSettings Smtp { get; set; } = new();
     public string? BrapiToken { get; set; }
+    public int QuoteUpdateIntervalSeconds { get; set; }
 }
 
 public class EmailSettings

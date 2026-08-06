@@ -118,8 +118,7 @@ public static class Program
 
             try
             {
-                // TODO: Generalizar o delay entre alertas
-                await Task.Delay(TimeSpan.FromSeconds(15));   
+                await Task.Delay(TimeSpan.FromSeconds(config.QuoteUpdateIntervalSeconds));   
             }
             catch (OperationCanceledException)
             {

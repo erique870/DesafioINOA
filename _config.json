@@ -11,5 +11,6 @@
     "AppPassword": "sua-senha-de-app-aqui",
     "EnableSsl": true
   },
-  "BrapiToken": ""
+  "BrapiToken": "",
+  "QuoteUpdateIntervalSeconds": 30
 }
